@@ -7,17 +7,31 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 import java.util.List;
 import java.util.Optional;
 
 @RestController
 @RequestMapping("/tipos-sistema")
+@Tag(name = "Tipos de Sistema", description = "API para gestionar los tipos de sistemas disponibles")
 public class TipoSistemaController {
 
     @Autowired
     private TipoSistemaRepository tipoSistemaRepository;
 
-    // Obtener todos los tipos de sistema
+    @Operation(summary = "Obtener todos los tipos de sistema", description = "Recupera una lista de todos los tipos de sistema registrados")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Operación exitosa",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = TipoSistema.class)))
+    })
     @GetMapping
     public ResponseEntity<List<TipoSistema>> getAllTiposSistema() {
         List<TipoSistema> tiposSistema = tipoSistemaRepository.findAll();
