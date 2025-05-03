@@ -14,7 +14,8 @@ public interface DocumentacionRepository extends JpaRepository<Documentacion, Lo
     List<Documentacion> findByTipoDocumento(Documentacion.TipoDocumento tipoDocumento);
 
     @Query("SELECT d FROM Documentacion d WHERE d.tags LIKE %:tag%")
-    List<Documentacion> findByTagContaining(String tag);
+    List<Documentacion> findByTagsContaining(String tag);
+
 
     List<Documentacion> findByTituloContaining(String titulo);
 }

@@ -122,7 +122,7 @@ public class DocumentacionController {
     // Buscar documentación por tag
     @GetMapping("/buscar/tag/{tag}")
     public ResponseEntity<List<Documentacion>> getDocumentacionByTag(@PathVariable String tag) {
-        List<Documentacion> documentacion = documentacionRepository.findByTagContaining(tag);
+        List<Documentacion> documentacion = documentacionRepository.findByTagsContaining(tag);
         return new ResponseEntity<>(documentacion, HttpStatus.OK);
     }
 
