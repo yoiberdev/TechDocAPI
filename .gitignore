@@ -31,3 +31,17 @@ replay_pid*
 
 # Sprint Boot
 .gradle/
+
+build/
+out/
+
+target/
+*.class
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+*.tar
+*.gz
