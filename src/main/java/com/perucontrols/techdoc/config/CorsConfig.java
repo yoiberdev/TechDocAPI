@@ -19,7 +19,11 @@ public class CorsConfig {
         // Si allowCredentials es true, no puedes usar "*" para origins
         config.setAllowCredentials(true);
         // En lugar de "*", especifica los orígenes permitidos
-        config.setAllowedOriginPatterns(Arrays.asList("http://localhost:*", "https://*.perucontrols.com"));
+        config.setAllowedOriginPatterns(Arrays.asList(
+                "http://localhost:*",
+                "https://*.perucontrols.com",
+                "https://techdoc.yoiber.com"
+        ));
         config.addAllowedHeader("*");
         config.addAllowedMethod("*");
         source.registerCorsConfiguration("/**", config);
