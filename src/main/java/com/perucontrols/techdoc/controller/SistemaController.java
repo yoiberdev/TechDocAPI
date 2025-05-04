@@ -25,7 +25,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/sistemas")
-@Tag(name = "Sistemas", description = "API para gestionar la información de sistemas instalados en embarcaciones")
+@Tag(name = "Sistemas", description = "Endpoints para gestionar la información de sistemas instalados en embarcaciones")
 public class SistemaController {
 
     @Autowired

@@ -23,11 +23,6 @@ public class OpenApiConfig {
         prodServer.setUrl("https://api.perucontrols.com");
         prodServer.setDescription("URL del servidor de producción");
 
-        Contact contact = new Contact();
-        contact.setEmail("soporte@perucontrols.com");
-        contact.setName("Soporte Peru Controls");
-        contact.setUrl("https://www.perucontrols.com");
-
         License mitLicense = new License()
                 .name("Licencia MIT")
                 .url("https://opensource.org/licenses/MIT");
@@ -35,7 +30,6 @@ public class OpenApiConfig {
         Info info = new Info()
                 .title("API de Documentación Técnica de Embarcaciones")
                 .version("1.0")
-                .contact(contact)
                 .description("Esta API proporciona endpoints para gestionar la documentación técnica de sistemas instalados en embarcaciones marítimas.")
                 .license(mitLicense);
 

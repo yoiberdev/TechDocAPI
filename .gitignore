@@ -28,3 +28,6 @@ replay_pid*
 
 *.iml
 *.ipr
+
+# Sprint Boot
+.gradle/

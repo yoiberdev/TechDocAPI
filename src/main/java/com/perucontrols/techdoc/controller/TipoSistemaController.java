@@ -20,7 +20,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/tipos-sistema")
-@Tag(name = "Tipos de Sistema", description = "API para gestionar los tipos de sistemas disponibles")
+@Tag(name = "Tipos de Sistema", description = "Endpoints para gestionar los tipos de sistemas disponibles")
 public class TipoSistemaController {
 
     @Autowired

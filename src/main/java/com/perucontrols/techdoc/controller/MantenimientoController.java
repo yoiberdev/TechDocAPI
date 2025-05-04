@@ -4,6 +4,7 @@ import com.perucontrols.techdoc.model.Mantenimiento;
 import com.perucontrols.techdoc.model.Sistema;
 import com.perucontrols.techdoc.repository.MantenimientoRepository;
 import com.perucontrols.techdoc.repository.SistemaRepository;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -16,6 +17,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/mantenimientos")
+@Tag(name = "Mantenimiento", description = "Endpont para gestionar la información de mantenieminto de un sistema")
 public class MantenimientoController {
 
     @Autowired

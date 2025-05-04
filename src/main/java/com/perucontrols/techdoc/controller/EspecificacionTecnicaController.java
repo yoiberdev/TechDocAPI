@@ -4,6 +4,7 @@ import com.perucontrols.techdoc.model.EspecificacionTecnica;
 import com.perucontrols.techdoc.model.Sistema;
 import com.perucontrols.techdoc.repository.EspecificacionTecnicaRepository;
 import com.perucontrols.techdoc.repository.SistemaRepository;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +15,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/especificaciones-tecnicas")
+@Tag(name = "EspecificacionTecnica", description = "Endpoint para gestionar las especificaciones tecnicas de un sistema")
 public class EspecificacionTecnicaController {
 
     @Autowired

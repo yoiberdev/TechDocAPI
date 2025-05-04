@@ -19,7 +19,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/embarcaciones")
-@Tag(name = "Embarcaciones", description = "API para gestionar la información de embarcaciones")
+@Tag(name = "Embarcaciones", description = "Endpoints para gestionar la información de embarcaciones")
 public class EmbarcacionController {
 
     @Autowired
