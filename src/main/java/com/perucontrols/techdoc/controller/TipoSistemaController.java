@@ -1,103 +1,72 @@
 package com.perucontrols.techdoc.controller;
 
+import com.perucontrols.techdoc.dto.*;
 import com.perucontrols.techdoc.model.TipoSistema;
-import com.perucontrols.techdoc.repository.TipoSistemaRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
+import com.perucontrols.techdoc.service.TipoSistemaService;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.tags.Tag;
-
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/tipos-sistema")
-@Tag(name = "Tipos de Sistema", description = "Endpoints para gestionar los tipos de sistemas disponibles")
+@Tag(name = "TipoSistema", description = "Endpoints para gestionar tipos de sistemas")
+@RequiredArgsConstructor
 public class TipoSistemaController {
 
-    @Autowired
-    private TipoSistemaRepository tipoSistemaRepository;
+    private final TipoSistemaService tipoSistemaService;
 
-    @Operation(summary = "Obtener todos los tipos de sistema", description = "Recupera una lista de todos los tipos de sistema registrados")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Operación exitosa",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = TipoSistema.class)))
-    })
     @GetMapping
-    public ResponseEntity<List<TipoSistema>> getAllTiposSistema() {
-        List<TipoSistema> tiposSistema = tipoSistemaRepository.findAll();
-        return new ResponseEntity<>(tiposSistema, HttpStatus.OK);
+    public ResponseEntity<ApiResponseDto<List<TipoSistemaDTO>>> getAll() {
+        return ResponseEntity.ok(ApiResponseDto.success(tipoSistemaService.getAllTiposSistema()));
     }
 
-    // Obtener un tipo de sistema por ID
+    @GetMapping("/paged")
+    public ResponseEntity<ApiResponseDto<PaginatedResponse<TipoSistemaDTO>>> getPaged(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "id") String sortBy,
+            @RequestParam(defaultValue = "ASC") String direction
+    ) {
+        Pageable pageable = PageRequest.of(page, size,
+                direction.equalsIgnoreCase("DESC") ? Sort.Direction.DESC : Sort.Direction.ASC,
+                sortBy);
+        return ResponseEntity.ok(ApiResponseDto.success(tipoSistemaService.getAllTiposSistemaPaged(pageable)));
+    }
+
     @GetMapping("/{id}")
-    public ResponseEntity<TipoSistema> getTipoSistemaById(@PathVariable Long id) {
-        Optional<TipoSistema> tipoSistema = tipoSistemaRepository.findById(id);
-        return tipoSistema.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
-                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    public ResponseEntity<ApiResponseDto<TipoSistemaDTO>> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponseDto.success(tipoSistemaService.getTipoSistemaById(id)));
     }
 
-    // Crear un nuevo tipo de sistema
     @PostMapping
-    public ResponseEntity<TipoSistema> createTipoSistema(@RequestBody TipoSistema tipoSistema) {
-        try {
-            TipoSistema newTipoSistema = tipoSistemaRepository.save(tipoSistema);
-            return new ResponseEntity<>(newTipoSistema, HttpStatus.CREATED);
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+    public ResponseEntity<ApiResponseDto<TipoSistemaDTO>> create(@RequestBody CreateTipoSistemaRequest request) {
+        return ResponseEntity.ok(ApiResponseDto.success(tipoSistemaService.createTipoSistema(request)));
     }
 
-    // Actualizar un tipo de sistema existente
     @PutMapping("/{id}")
-    public ResponseEntity<TipoSistema> updateTipoSistema(@PathVariable Long id, @RequestBody TipoSistema tipoSistema) {
-        Optional<TipoSistema> tipoSistemaData = tipoSistemaRepository.findById(id);
-
-        if (tipoSistemaData.isPresent()) {
-            TipoSistema updatedTipoSistema = tipoSistemaData.get();
-            updatedTipoSistema.setNombre(tipoSistema.getNombre());
-            updatedTipoSistema.setDescripcion(tipoSistema.getDescripcion());
-            updatedTipoSistema.setCategoria(tipoSistema.getCategoria());
-            updatedTipoSistema.setFabricanteRecomendado(tipoSistema.getFabricanteRecomendado());
-            updatedTipoSistema.setVidaUtilEstimada(tipoSistema.getVidaUtilEstimada());
-
-            return new ResponseEntity<>(tipoSistemaRepository.save(updatedTipoSistema), HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
+    public ResponseEntity<ApiResponseDto<TipoSistemaDTO>> update(@PathVariable Long id, @RequestBody UpdateTipoSistemaRequest request) {
+        return ResponseEntity.ok(ApiResponseDto.success(tipoSistemaService.updateTipoSistema(id, request)));
     }
 
-    // Eliminar un tipo de sistema
     @DeleteMapping("/{id}")
-    public ResponseEntity<HttpStatus> deleteTipoSistema(@PathVariable Long id) {
-        try {
-            tipoSistemaRepository.deleteById(id);
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+    public ResponseEntity<ApiResponseDto<Void>> delete(@PathVariable Long id) {
+        tipoSistemaService.deleteTipoSistema(id);
+        return ResponseEntity.ok(ApiResponseDto.success(null));
     }
 
-    // Buscar tipos de sistema por categoría
     @GetMapping("/buscar/categoria/{categoria}")
-    public ResponseEntity<List<TipoSistema>> getTiposSistemaByCategoria(@PathVariable TipoSistema.CategoriaSistema categoria) {
-        List<TipoSistema> tiposSistema = tipoSistemaRepository.findByCategoria(categoria);
-        return new ResponseEntity<>(tiposSistema, HttpStatus.OK);
+    public ResponseEntity<ApiResponseDto<List<TipoSistemaDTO>>> getByCategoria(@PathVariable TipoSistema.CategoriaSistema categoria) {
+        return ResponseEntity.ok(ApiResponseDto.success(tipoSistemaService.getTiposSistemaByCategoria(categoria)));
     }
 
-    // Buscar tipos de sistema por nombre
     @GetMapping("/buscar/nombre/{nombre}")
-    public ResponseEntity<List<TipoSistema>> getTiposSistemaByNombre(@PathVariable String nombre) {
-        List<TipoSistema> tiposSistema = tipoSistemaRepository.findByNombreContaining(nombre);
-        return new ResponseEntity<>(tiposSistema, HttpStatus.OK);
+    public ResponseEntity<ApiResponseDto<List<TipoSistemaDTO>>> getByNombre(@PathVariable String nombre) {
+        return ResponseEntity.ok(ApiResponseDto.success(tipoSistemaService.getTiposSistemaByNombre(nombre)));
     }
 }
