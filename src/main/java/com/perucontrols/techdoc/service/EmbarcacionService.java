@@ -56,6 +56,14 @@ public class EmbarcacionService {
         Embarcacion existing = embarcacionRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Embarcación no encontrada con ID: " + id));
 
+        if (request.getMatricula() != null && !request.getMatricula().equalsIgnoreCase(existing.getMatricula())) {
+            embarcacionRepository.findByMatricula(request.getMatricula())
+                    .ifPresent(embarqueWithSameMatricula -> {
+                        if (!embarqueWithSameMatricula.getId().equals(id)) {
+                            throw new IllegalArgumentException("La matrícula ya está asignada a otra embarcación.");
+                        }
+                    });
+        }
         embarcacionMapper.updateEntity(existing, request);
         Embarcacion updated = embarcacionRepository.save(existing);
         return embarcacionMapper.toDTO(updated);
