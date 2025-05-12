@@ -4,6 +4,7 @@ import com.perucontrols.techdoc.dto.*;
 import com.perucontrols.techdoc.model.Sistema;
 import com.perucontrols.techdoc.service.SistemaService;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -45,7 +46,7 @@ public class SistemaController {
     }
 
     @PostMapping
-    public ResponseEntity<ApiResponseDto<SistemaDTO>> create(@RequestBody CreateSistemaRequest request) {
+    public ResponseEntity<ApiResponseDto<SistemaDTO>> create(@Valid @RequestBody CreateSistemaRequest request) {
         return ResponseEntity.ok(ApiResponseDto.success(sistemaService.createSistema(request)));
     }
 
