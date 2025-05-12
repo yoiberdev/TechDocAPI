@@ -1,117 +1,54 @@
 package com.perucontrols.techdoc.controller;
 
-import com.perucontrols.techdoc.model.EspecificacionTecnica;
-import com.perucontrols.techdoc.model.Sistema;
-import com.perucontrols.techdoc.repository.EspecificacionTecnicaRepository;
-import com.perucontrols.techdoc.repository.SistemaRepository;
+import com.perucontrols.techdoc.dto.*;
+import com.perucontrols.techdoc.service.EspecificacionTecnicaService;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/especificaciones-tecnicas")
-@Tag(name = "EspecificacionTecnica", description = "Endpoint para gestionar las especificaciones tecnicas de un sistema")
+@Tag(name = "EspecificacionTecnica", description = "Endpoints para gestionar especificaciones técnicas")
+@RequiredArgsConstructor
 public class EspecificacionTecnicaController {
 
-    @Autowired
-    private EspecificacionTecnicaRepository especificacionTecnicaRepository;
+    private final EspecificacionTecnicaService service;
 
-    @Autowired
-    private SistemaRepository sistemaRepository;
-
-    // Obtener todas las especificaciones técnicas
     @GetMapping
-    public ResponseEntity<List<EspecificacionTecnica>> getAllEspecificacionesTecnicas() {
-        List<EspecificacionTecnica> especificacionesTecnicas = especificacionTecnicaRepository.findAll();
-        return new ResponseEntity<>(especificacionesTecnicas, HttpStatus.OK);
+    public ResponseEntity<ApiResponseDto<List<EspecificacionTecnicaDTO>>> getAll() {
+        return ResponseEntity.ok(ApiResponseDto.success("Lista obtenida", service.getAll()));
     }
 
-    // Obtener una especificación técnica por ID
     @GetMapping("/{id}")
-    public ResponseEntity<EspecificacionTecnica> getEspecificacionTecnicaById(@PathVariable Long id) {
-        Optional<EspecificacionTecnica> especificacionTecnica = especificacionTecnicaRepository.findById(id);
-        return especificacionTecnica.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
-                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    public ResponseEntity<ApiResponseDto<EspecificacionTecnicaDTO>> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponseDto.success("Encontrado", service.getById(id)));
     }
 
-    // Crear una nueva especificación técnica
     @PostMapping
-    public ResponseEntity<EspecificacionTecnica> createEspecificacionTecnica(@RequestBody EspecificacionTecnica especificacionTecnica) {
-        try {
-            // Verificar que el sistema existe
-            if (especificacionTecnica.getSistema() != null && especificacionTecnica.getSistema().getId() != null) {
-                Optional<Sistema> sistema = sistemaRepository.findById(especificacionTecnica.getSistema().getId());
-                if (sistema.isEmpty()) {
-                    return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-                }
-                especificacionTecnica.setSistema(sistema.get());
-
-                // Verificar si ya existe una especificación técnica para este sistema
-                Optional<EspecificacionTecnica> existingEspecificacion = especificacionTecnicaRepository.findBySistema(sistema.get());
-                if (existingEspecificacion.isPresent()) {
-                    return new ResponseEntity<>(HttpStatus.CONFLICT);
-                }
-            }
-
-            EspecificacionTecnica newEspecificacionTecnica = especificacionTecnicaRepository.save(especificacionTecnica);
-            return new ResponseEntity<>(newEspecificacionTecnica, HttpStatus.CREATED);
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+    public ResponseEntity<ApiResponseDto<EspecificacionTecnicaDTO>> create(
+            @Valid @RequestBody CreateEspecificacionTecnicaRequest request) {
+        return ResponseEntity.ok(ApiResponseDto.success("Creado", service.create(request)));
     }
 
-    // Actualizar una especificación técnica existente
     @PutMapping("/{id}")
-    public ResponseEntity<EspecificacionTecnica> updateEspecificacionTecnica(@PathVariable Long id, @RequestBody EspecificacionTecnica especificacionTecnica) {
-        Optional<EspecificacionTecnica> especificacionTecnicaData = especificacionTecnicaRepository.findById(id);
-
-        if (especificacionTecnicaData.isPresent()) {
-            EspecificacionTecnica updatedEspecificacionTecnica = especificacionTecnicaData.get();
-
-            updatedEspecificacionTecnica.setTipoCableado(especificacionTecnica.getTipoCableado());
-            updatedEspecificacionTecnica.setVoltaje(especificacionTecnica.getVoltaje());
-            updatedEspecificacionTecnica.setAmperaje(especificacionTecnica.getAmperaje());
-            updatedEspecificacionTecnica.setProtocoloComunicacion(especificacionTecnica.getProtocoloComunicacion());
-            updatedEspecificacionTecnica.setPuertosConexion(especificacionTecnica.getPuertosConexion());
-            updatedEspecificacionTecnica.setDimensiones(especificacionTecnica.getDimensiones());
-            updatedEspecificacionTecnica.setPeso(especificacionTecnica.getPeso());
-            updatedEspecificacionTecnica.setTemperaturaOperacion(especificacionTecnica.getTemperaturaOperacion());
-            updatedEspecificacionTecnica.setProteccionIp(especificacionTecnica.getProteccionIp());
-            updatedEspecificacionTecnica.setCertificaciones(especificacionTecnica.getCertificaciones());
-            updatedEspecificacionTecnica.setRequisitosEspeciales(especificacionTecnica.getRequisitosEspeciales());
-
-            return new ResponseEntity<>(especificacionTecnicaRepository.save(updatedEspecificacionTecnica), HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
+    public ResponseEntity<ApiResponseDto<EspecificacionTecnicaDTO>> update(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateEspecificacionTecnicaRequest request) {
+        return ResponseEntity.ok(ApiResponseDto.success("Actualizado", service.update(id, request)));
     }
 
-    // Eliminar una especificación técnica
     @DeleteMapping("/{id}")
-    public ResponseEntity<HttpStatus> deleteEspecificacionTecnica(@PathVariable Long id) {
-        try {
-            especificacionTecnicaRepository.deleteById(id);
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+    public ResponseEntity<ApiResponseDto<Void>> delete(@PathVariable Long id) {
+        service.delete(id);
+        return ResponseEntity.ok(ApiResponseDto.success("Eliminado", null));
     }
 
-    // Buscar especificación técnica por sistema
     @GetMapping("/buscar/sistema/{idSistema}")
-    public ResponseEntity<EspecificacionTecnica> getEspecificacionTecnicaBySistema(@PathVariable Long idSistema) {
-        Optional<Sistema> sistema = sistemaRepository.findById(idSistema);
-        if (sistema.isEmpty()) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-
-        Optional<EspecificacionTecnica> especificacionTecnica = especificacionTecnicaRepository.findBySistema(sistema.get());
-        return especificacionTecnica.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
-                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    public ResponseEntity<ApiResponseDto<EspecificacionTecnicaDTO>> getBySistema(@PathVariable Long idSistema) {
+        return ResponseEntity.ok(ApiResponseDto.success("Encontrado", service.getBySistema(idSistema)));
     }
 }
