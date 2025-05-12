@@ -1,16 +1,26 @@
 package com.perucontrols.techdoc.model.error;
 
-import java.time.LocalDateTime;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import lombok.Getter;
+import lombok.Setter;
 
-//Clase de errores
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
+
+@Setter
+@Getter
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class ErrorResponse {
+    // Getters y setters
     private LocalDateTime timestamp;
     private int status;
     private String error;
     private String message;
     private String path;
+    private Map<String, String> validationErrors;
 
-    // Constructor
+    // Constructor principal
     public ErrorResponse(int status, String error, String message, String path) {
         this.timestamp = LocalDateTime.now();
         this.status = status;
@@ -19,44 +29,10 @@ public class ErrorResponse {
         this.path = path;
     }
 
-    // Getters y setters
-    public LocalDateTime getTimestamp() {
-        return timestamp;
+    // Constructor para errores de validación
+    public ErrorResponse(int status, String error, String message, String path, Map<String, String> validationErrors) {
+        this(status, error, message, path);
+        this.validationErrors = validationErrors;
     }
 
-    public void setTimestamp(LocalDateTime timestamp) {
-        this.timestamp = timestamp;
-    }
-
-    public int getStatus() {
-        return status;
-    }
-
-    public void setStatus(int status) {
-        this.status = status;
-    }
-
-    public String getError() {
-        return error;
-    }
-
-    public void setError(String error) {
-        this.error = error;
-    }
-
-    public String getMessage() {
-        return message;
-    }
-
-    public void setMessage(String message) {
-        this.message = message;
-    }
-
-    public String getPath() {
-        return path;
-    }
-
-    public void setPath(String path) {
-        this.path = path;
-    }
 }
