@@ -157,7 +157,6 @@ public class EmbarcacionController {
     public ResponseEntity<Void> deleteEmbarcacion(
             @Parameter(description = "ID de la embarcación a eliminar") @PathVariable Long id) {
 
-        // Verificar que la embarcación existe
         if (!embarcacionRepository.existsById(id)) {
             throw new EntityNotFoundException("No se encontró la embarcación con ID: " + id);
         }

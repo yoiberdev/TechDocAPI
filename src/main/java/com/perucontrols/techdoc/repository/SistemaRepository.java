@@ -10,14 +10,22 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface SistemaRepository extends JpaRepository<Sistema, Long> {
+
     List<Sistema> findByEmbarcacion(Embarcacion embarcacion);
+
     List<Sistema> findByTipoSistema(TipoSistema tipoSistema);
+
     List<Sistema> findByEstado(Sistema.EstadoSistema estado);
+
     List<Sistema> findByNombreContaining(String nombre);
-    
-    @Query("SELECT s FROM Sistema s WHERE s.fechaProximoMantenimiento <= :fecha OR s.fechaProximoMantenimiento IS NULL")
-    List<Sistema> findSistemasRequiringMaintenance(@Param("fecha") LocalDate fecha);
+
+    Optional<Sistema> findByNumeroSerieAndEmbarcacion(String numeroSerie, Embarcacion embarcacion);
+
+    @Query("SELECT s FROM Sistema s WHERE s.fechaProximoMantenimiento <= :fechaActual OR " +
+            "(s.tiempoVidaRestante IS NOT NULL AND s.tiempoVidaRestante <= 0)")
+    List<Sistema> findSistemasRequiringMaintenance(@Param("fechaActual") LocalDate fechaActual);
 }
