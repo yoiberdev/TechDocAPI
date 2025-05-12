@@ -48,3 +48,9 @@ target/
 
 .env
 *.env
+.gradle/buildOutputCleanup/buildOutputCleanup.lock
+/.gradle
+/.gradle
+.gradle/buildOutputCleanup/buildOutputCleanup.lock
+.gradle/buildOutputCleanup/buildOutputCleanup.lock
+.gradle/buildOutputCleanup/buildOutputCleanup.lock

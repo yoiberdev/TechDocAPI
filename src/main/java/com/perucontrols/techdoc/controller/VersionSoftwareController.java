@@ -1,139 +1,82 @@
 package com.perucontrols.techdoc.controller;
 
-import com.perucontrols.techdoc.model.Sistema;
-import com.perucontrols.techdoc.model.VersionSoftware;
-import com.perucontrols.techdoc.repository.SistemaRepository;
-import com.perucontrols.techdoc.repository.VersionSoftwareRepository;
+import com.perucontrols.techdoc.dto.*;
+import com.perucontrols.techdoc.service.VersionSoftwareService;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/versiones-software")
 @Tag(name = "VersionSoftware", description = "Endpoints para gestionar las versiones de software de un sistema")
+@RequiredArgsConstructor
+@Slf4j
 public class VersionSoftwareController {
 
-    @Autowired
-    private VersionSoftwareRepository versionSoftwareRepository;
+    private final VersionSoftwareService versionSoftwareService;
 
-    @Autowired
-    private SistemaRepository sistemaRepository;
-
-    // Obtener todas las versiones de software
     @GetMapping
-    public ResponseEntity<List<VersionSoftware>> getAllVersionesSoftware() {
-        List<VersionSoftware> versionesSoftware = versionSoftwareRepository.findAll();
-        return new ResponseEntity<>(versionesSoftware, HttpStatus.OK);
+    public ResponseEntity<ApiResponseDto<List<VersionSoftwareDTO>>> getAllVersionesSoftware() {
+        List<VersionSoftwareDTO> versiones = versionSoftwareService.getAllVersionesSoftware();
+        return ResponseEntity.ok(ApiResponseDto.success(versiones));
     }
 
-    // Obtener una versión de software por ID
+    @GetMapping("/paged")
+    public ResponseEntity<ApiResponseDto<PaginatedResponse<VersionSoftwareDTO>>> getAllPaged(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "id") String sortBy,
+            @RequestParam(defaultValue = "ASC") String sortDirection) {
+        Sort.Direction direction = sortDirection.equalsIgnoreCase("DESC") ? Sort.Direction.DESC : Sort.Direction.ASC;
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+
+        PaginatedResponse<VersionSoftwareDTO> response = versionSoftwareService.getAllVersionesSoftwarePaged(pageable);
+        return ResponseEntity.ok(ApiResponseDto.success(response));
+    }
+
     @GetMapping("/{id}")
-    public ResponseEntity<VersionSoftware> getVersionSoftwareById(@PathVariable Long id) {
-        Optional<VersionSoftware> versionSoftware = versionSoftwareRepository.findById(id);
-        return versionSoftware.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
-                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    public ResponseEntity<ApiResponseDto<VersionSoftwareDTO>> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponseDto.success(versionSoftwareService.getVersionSoftwareById(id)));
     }
 
-    // Crear una nueva versión de software
     @PostMapping
-    public ResponseEntity<VersionSoftware> createVersionSoftware(@RequestBody VersionSoftware versionSoftware) {
-        try {
-            // Verificar que el sistema existe
-            if (versionSoftware.getSistema() != null && versionSoftware.getSistema().getId() != null) {
-                Optional<Sistema> sistema = sistemaRepository.findById(versionSoftware.getSistema().getId());
-                if (sistema.isEmpty()) {
-                    return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-                }
-                versionSoftware.setSistema(sistema.get());
-            }
-
-            VersionSoftware newVersionSoftware = versionSoftwareRepository.save(versionSoftware);
-            return new ResponseEntity<>(newVersionSoftware, HttpStatus.CREATED);
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+    public ResponseEntity<ApiResponseDto<VersionSoftwareDTO>> create(@RequestBody CreateVersionSoftwareRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponseDto.success(versionSoftwareService.createVersionSoftware(request)));
     }
 
-    // Actualizar una versión de software existente
     @PutMapping("/{id}")
-    public ResponseEntity<VersionSoftware> updateVersionSoftware(@PathVariable Long id, @RequestBody VersionSoftware versionSoftware) {
-        Optional<VersionSoftware> versionSoftwareData = versionSoftwareRepository.findById(id);
-
-        if (versionSoftwareData.isPresent()) {
-            VersionSoftware updatedVersionSoftware = versionSoftwareData.get();
-
-            // Verificar que el sistema existe
-            if (versionSoftware.getSistema() != null && versionSoftware.getSistema().getId() != null) {
-                Optional<Sistema> sistema = sistemaRepository.findById(versionSoftware.getSistema().getId());
-                if (sistema.isEmpty()) {
-                    return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-                }
-                updatedVersionSoftware.setSistema(sistema.get());
-            }
-
-            updatedVersionSoftware.setVersion(versionSoftware.getVersion());
-            updatedVersionSoftware.setFechaInstalacion(versionSoftware.getFechaInstalacion());
-            updatedVersionSoftware.setChangelog(versionSoftware.getChangelog());
-            updatedVersionSoftware.setCompatibleCon(versionSoftware.getCompatibleCon());
-            updatedVersionSoftware.setArchivoInstalador(versionSoftware.getArchivoInstalador());
-            updatedVersionSoftware.setRequisitosSistema(versionSoftware.getRequisitosSistema());
-            updatedVersionSoftware.setInstaladoPor(versionSoftware.getInstaladoPor());
-            updatedVersionSoftware.setEstado(versionSoftware.getEstado());
-            updatedVersionSoftware.setFechaFinSoporte(versionSoftware.getFechaFinSoporte());
-
-            return new ResponseEntity<>(versionSoftwareRepository.save(updatedVersionSoftware), HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
+    public ResponseEntity<ApiResponseDto<VersionSoftwareDTO>> update(@PathVariable Long id,
+                                                                     @RequestBody UpdateVersionSoftwareRequest request) {
+        return ResponseEntity.ok(ApiResponseDto.success(versionSoftwareService.updateVersionSoftware(id, request)));
     }
 
-    // Eliminar una versión de software
     @DeleteMapping("/{id}")
-    public ResponseEntity<HttpStatus> deleteVersionSoftware(@PathVariable Long id) {
-        try {
-            versionSoftwareRepository.deleteById(id);
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        versionSoftwareService.deleteVersionSoftware(id);
+        return ResponseEntity.noContent().build();
     }
 
-    // Buscar versiones de software por sistema
     @GetMapping("/buscar/sistema/{idSistema}")
-    public ResponseEntity<List<VersionSoftware>> getVersionesSoftwareBySistema(@PathVariable Long idSistema) {
-        Optional<Sistema> sistema = sistemaRepository.findById(idSistema);
-        if (sistema.isEmpty()) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-
-        List<VersionSoftware> versionesSoftware = versionSoftwareRepository.findBySistema(sistema.get());
-        return new ResponseEntity<>(versionesSoftware, HttpStatus.OK);
+    public ResponseEntity<ApiResponseDto<List<VersionSoftwareDTO>>> getBySistema(@PathVariable Long idSistema) {
+        return ResponseEntity.ok(ApiResponseDto.success(versionSoftwareService.getVersionesSoftwareBySistema(idSistema)));
     }
 
-    // Buscar versión de software actual por sistema
     @GetMapping("/buscar/sistema/{idSistema}/actual")
-    public ResponseEntity<VersionSoftware> getVersionSoftwareActualBySistema(@PathVariable Long idSistema) {
-        Optional<Sistema> sistema = sistemaRepository.findById(idSistema);
-        if (sistema.isEmpty()) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-
-        Optional<VersionSoftware> versionSoftware = versionSoftwareRepository.findBySistemaAndEstado(sistema.get(), VersionSoftware.EstadoVersion.ACTUAL);
-        return versionSoftware.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
-                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    public ResponseEntity<ApiResponseDto<VersionSoftwareDTO>> getActualBySistema(@PathVariable Long idSistema) {
+        return ResponseEntity.ok(ApiResponseDto.success(versionSoftwareService.getVersionSoftwareActualBySistema(idSistema)));
     }
 
-    // Buscar versiones de software con fin de soporte próximo
     @GetMapping("/buscar/fin-soporte")
-    public ResponseEntity<List<VersionSoftware>> getVersionesSoftwarePorFinSoporte() {
-        LocalDate fechaActual = LocalDate.now();
-        List<VersionSoftware> versionesSoftware = versionSoftwareRepository.findByFechaFinSoporteLessThanEqual(fechaActual);
-        return new ResponseEntity<>(versionesSoftware, HttpStatus.OK);
+    public ResponseEntity<ApiResponseDto<List<VersionSoftwareDTO>>> getByFinSoporte() {
+        return ResponseEntity.ok(ApiResponseDto.success(versionSoftwareService.getVersionesSoftwarePorFinSoporte()));
     }
 }

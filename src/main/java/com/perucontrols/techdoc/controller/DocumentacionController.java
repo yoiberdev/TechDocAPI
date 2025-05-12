@@ -1,137 +1,99 @@
 package com.perucontrols.techdoc.controller;
 
+import com.perucontrols.techdoc.dto.*;
 import com.perucontrols.techdoc.model.Documentacion;
-import com.perucontrols.techdoc.model.Sistema;
-import com.perucontrols.techdoc.repository.DocumentacionRepository;
-import com.perucontrols.techdoc.repository.SistemaRepository;
+import com.perucontrols.techdoc.service.DocumentacionService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/documentacion")
-@Tag(name = "Documentacion", description = "Endpoints para gestionar la información de documentación")
+@Tag(name = "Documentacion", description = "Endpoints para gestionar la documentación de un sistema")
+@RequiredArgsConstructor
 public class DocumentacionController {
 
-    @Autowired
-    private DocumentacionRepository documentacionRepository;
+    private final DocumentacionService documentacionService;
 
-    @Autowired
-    private SistemaRepository sistemaRepository;
-
-    // Obtener toda la documentación
     @GetMapping
-    public ResponseEntity<List<Documentacion>> getAllDocumentacion() {
-        List<Documentacion> documentacion = documentacionRepository.findAll();
-        return new ResponseEntity<>(documentacion, HttpStatus.OK);
+    @Operation(summary = "Obtener todos los documentos")
+    public ResponseEntity<ApiResponseDto<List<DocumentacionDTO>>> getAll() {
+        return ResponseEntity.ok(ApiResponseDto.success(documentacionService.getAll()));
     }
 
-    // Obtener un documento por ID
+    @GetMapping("/paged")
+    @Operation(summary = "Obtener documentos paginados")
+    public ResponseEntity<ApiResponseDto<PaginatedResponse<DocumentacionDTO>>> getPaged(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "id") String sortBy,
+            @RequestParam(defaultValue = "ASC") String sortDirection) {
+
+        Sort.Direction direction = sortDirection.equalsIgnoreCase("DESC") ? Sort.Direction.DESC : Sort.Direction.ASC;
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+
+        return ResponseEntity.ok(ApiResponseDto.success(documentacionService.getAllPaged(pageable)));
+    }
+
     @GetMapping("/{id}")
-    public ResponseEntity<Documentacion> getDocumentacionById(@PathVariable Long id) {
-        Optional<Documentacion> documentacion = documentacionRepository.findById(id);
-        return documentacion.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
-                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    @Operation(summary = "Obtener un documento por ID")
+    public ResponseEntity<ApiResponseDto<DocumentacionDTO>> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponseDto.success(documentacionService.getById(id)));
     }
 
-    // Crear un nuevo documento
     @PostMapping
-    public ResponseEntity<Documentacion> createDocumentacion(@RequestBody Documentacion documentacion) {
-        try {
-            // Verificar que el sistema existe
-            if (documentacion.getSistema() != null && documentacion.getSistema().getId() != null) {
-                Optional<Sistema> sistema = sistemaRepository.findById(documentacion.getSistema().getId());
-                if (sistema.isEmpty()) {
-                    return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-                }
-                documentacion.setSistema(sistema.get());
-            }
-
-            Documentacion newDocumentacion = documentacionRepository.save(documentacion);
-            return new ResponseEntity<>(newDocumentacion, HttpStatus.CREATED);
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+    @Operation(summary = "Crear un nuevo documento")
+    public ResponseEntity<ApiResponseDto<DocumentacionDTO>> create(@Valid @RequestBody CreateDocumentacionRequest request) {
+        return ResponseEntity.status(201).body(ApiResponseDto.success(documentacionService.create(request)));
     }
 
-    // Actualizar un documento existente
     @PutMapping("/{id}")
-    public ResponseEntity<Documentacion> updateDocumentacion(@PathVariable Long id, @RequestBody Documentacion documentacion) {
-        Optional<Documentacion> documentacionData = documentacionRepository.findById(id);
-
-        if (documentacionData.isPresent()) {
-            Documentacion updatedDocumentacion = documentacionData.get();
-
-            // Verificar que el sistema existe
-            if (documentacion.getSistema() != null && documentacion.getSistema().getId() != null) {
-                Optional<Sistema> sistema = sistemaRepository.findById(documentacion.getSistema().getId());
-                if (sistema.isEmpty()) {
-                    return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-                }
-                updatedDocumentacion.setSistema(sistema.get());
-            }
-
-            updatedDocumentacion.setTipoDocumento(documentacion.getTipoDocumento());
-            updatedDocumentacion.setTitulo(documentacion.getTitulo());
-            updatedDocumentacion.setArchivo(documentacion.getArchivo());
-            updatedDocumentacion.setFechaCreacion(documentacion.getFechaCreacion());
-            updatedDocumentacion.setCreadoPor(documentacion.getCreadoPor());
-            updatedDocumentacion.setVersion(documentacion.getVersion());
-            updatedDocumentacion.setDescripcion(documentacion.getDescripcion());
-            updatedDocumentacion.setTags(documentacion.getTags());
-
-            return new ResponseEntity<>(documentacionRepository.save(updatedDocumentacion), HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
+    @Operation(summary = "Actualizar un documento existente")
+    public ResponseEntity<ApiResponseDto<DocumentacionDTO>> update(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateDocumentacionRequest request) {
+        return ResponseEntity.ok(ApiResponseDto.success(documentacionService.update(id, request)));
     }
 
-    // Eliminar un documento
     @DeleteMapping("/{id}")
-    public ResponseEntity<HttpStatus> deleteDocumentacion(@PathVariable Long id) {
-        try {
-            documentacionRepository.deleteById(id);
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+    @Operation(summary = "Eliminar un documento")
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        documentacionService.delete(id);
+        return ResponseEntity.noContent().build();
     }
 
-    // Buscar documentación por sistema
     @GetMapping("/buscar/sistema/{idSistema}")
-    public ResponseEntity<List<Documentacion>> getDocumentacionBySistema(@PathVariable Long idSistema) {
-        Optional<Sistema> sistema = sistemaRepository.findById(idSistema);
-        if (sistema.isEmpty()) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-
-        List<Documentacion> documentacion = documentacionRepository.findBySistema(sistema.get());
-        return new ResponseEntity<>(documentacion, HttpStatus.OK);
+    @Operation(summary = "Buscar documentos por sistema")
+    public ResponseEntity<ApiResponseDto<List<DocumentacionDTO>>> getBySistema(@PathVariable Long idSistema) {
+        return ResponseEntity.ok(ApiResponseDto.success(documentacionService.getBySistema(idSistema)));
     }
 
-    // Buscar documentación por tipo de documento
     @GetMapping("/buscar/tipo/{tipoDocumento}")
-    public ResponseEntity<List<Documentacion>> getDocumentacionByTipo(@PathVariable Documentacion.TipoDocumento tipoDocumento) {
-        List<Documentacion> documentacion = documentacionRepository.findByTipoDocumento(tipoDocumento);
-        return new ResponseEntity<>(documentacion, HttpStatus.OK);
+    @Operation(summary = "Buscar documentos por tipo")
+    public ResponseEntity<ApiResponseDto<List<DocumentacionDTO>>> getByTipo(@PathVariable Documentacion.TipoDocumento tipoDocumento) {
+        return ResponseEntity.ok(ApiResponseDto.success(documentacionService.getByTipo(tipoDocumento)));
     }
 
-    // Buscar documentación por tag
     @GetMapping("/buscar/tag/{tag}")
-    public ResponseEntity<List<Documentacion>> getDocumentacionByTag(@PathVariable String tag) {
-        List<Documentacion> documentacion = documentacionRepository.findByTagsContaining(tag);
-        return new ResponseEntity<>(documentacion, HttpStatus.OK);
+    @Operation(summary = "Buscar documentos por tag")
+    public ResponseEntity<ApiResponseDto<List<DocumentacionDTO>>> getByTag(@PathVariable String tag) {
+        return ResponseEntity.ok(ApiResponseDto.success(documentacionService.getByTag(tag)));
     }
 
-    // Buscar documentación por título
     @GetMapping("/buscar/titulo/{titulo}")
-    public ResponseEntity<List<Documentacion>> getDocumentacionByTitulo(@PathVariable String titulo) {
-        List<Documentacion> documentacion = documentacionRepository.findByTituloContaining(titulo);
-        return new ResponseEntity<>(documentacion, HttpStatus.OK);
+    @Operation(summary = "Buscar documentos por título")
+    public ResponseEntity<ApiResponseDto<List<DocumentacionDTO>>> getByTitulo(@PathVariable String titulo) {
+        return ResponseEntity.ok(ApiResponseDto.success(documentacionService.getByTitulo(titulo)));
     }
 }
